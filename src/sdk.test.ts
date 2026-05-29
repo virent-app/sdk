@@ -9,6 +9,7 @@ import {
 	trackGoal,
 	type VirentBrowserOptions,
 } from "./browser";
+import { createVirentBotProxy } from "./next";
 import { createVirentBotTracker } from "./server";
 
 class MemoryStorage implements Storage {
@@ -245,6 +246,26 @@ test("bot tracker propagates accepted false responses", async () => {
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
+});
+
+test("Next.js proxy helper tracks in waitUntil without Next runtime imports", () => {
+	const pendingWork: Promise<unknown>[] = [];
+	const proxy = createVirentBotProxy({});
+	const result = proxy(
+		new Request("https://example.com/docs", {
+			headers: {
+				"user-agent": "GPTBot/1.0",
+			},
+		}),
+		{
+			waitUntil(promise) {
+				pendingWork.push(promise);
+			},
+		}
+	);
+
+	expect(result).toBeUndefined();
+	expect(pendingWork).toHaveLength(1);
 });
 
 test("browser client sends validated pageview payloads", async () => {

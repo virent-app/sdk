@@ -1,16 +1,17 @@
-import {
-	type NextFetchEvent,
-	type NextRequest,
-	NextResponse,
-} from "next/server";
 import { createVirentBotTracker, type VirentBotTrackerOptions } from "./server";
 
 export type VirentNextBotProxyOptions = VirentBotTrackerOptions;
 
+export interface VirentNextFetchEvent {
+	waitUntil(promise: Promise<unknown>): void;
+}
+
+export type VirentNextRequest = Request;
+
 export const createVirentBotProxy = (options: VirentNextBotProxyOptions) => {
 	const tracker = createVirentBotTracker(options);
 
-	return (request: NextRequest, event: NextFetchEvent) => {
+	return (request: VirentNextRequest, event: VirentNextFetchEvent) => {
 		event.waitUntil(
 			tracker
 				.trackRequest(request, {
@@ -21,7 +22,5 @@ export const createVirentBotProxy = (options: VirentNextBotProxyOptions) => {
 					reason: "tracking-failed",
 				}))
 		);
-
-		return NextResponse.next();
 	};
 };
