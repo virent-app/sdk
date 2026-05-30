@@ -12,6 +12,7 @@ export type BotFamily =
 	| "deepseek"
 	| "duckduckgo"
 	| "google"
+	| "huawei"
 	| "meta"
 	| "openai"
 	| "perplexity"
@@ -43,6 +44,7 @@ export interface BotClassification {
 	matchReason: string[];
 	name: string | null;
 	provider: BotProvider;
+	sourceIds: string[];
 }
 
 export type BotRuleAction = "allow" | "classify" | "deny";
@@ -56,6 +58,7 @@ export interface BotRuleInput {
 	name: string;
 	pattern: RegExp | string;
 	provider?: BotProvider;
+	sourceIds?: readonly string[];
 }
 
 export interface ClassifyBotOptions {
@@ -96,6 +99,7 @@ export interface VirentBotTrackerOptions {
 	endpoint?: string;
 	ipHashSalt?: string;
 	siteId?: string;
+	trackMode?: "ai-crawlers" | "all" | "bots";
 	writeKey?: string;
 }
 
@@ -182,6 +186,21 @@ const getSafeHeaders = (headers: Headers): Record<string, string> => {
 	}
 
 	return output;
+};
+
+const shouldTrackClassification = (
+	classification: BotClassification,
+	mode: VirentBotTrackerOptions["trackMode"] = "bots"
+) => {
+	if (mode === "all") {
+		return true;
+	}
+
+	if (mode === "ai-crawlers") {
+		return classification.isAiCrawler;
+	}
+
+	return classification.isBot;
 };
 
 const createPayload = async (
@@ -288,7 +307,26 @@ export const createVirentBotTracker = (
 			};
 		}
 
-		const payload = await createPayload(request, options, trackOptions);
+		const userAgent = getHeader(request.headers, "user-agent");
+		const classification =
+			trackOptions.classification ??
+			(classifyBotUserAgentInternal(userAgent, {
+				allowlistRules: options.allowlistRules,
+				customRules: options.customRules,
+				denylistRules: options.denylistRules,
+			}) as BotClassification);
+
+		if (!shouldTrackClassification(classification, options.trackMode)) {
+			return {
+				accepted: false,
+				reason: "not-a-bot",
+			};
+		}
+
+		const payload = await createPayload(request, options, {
+			...trackOptions,
+			classification,
+		});
 		const response = await fetch(options.endpoint ?? defaultEndpoint, {
 			body: JSON.stringify(payload),
 			headers: {

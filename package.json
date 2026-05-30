@@ -1,6 +1,6 @@
 {
   "name": "@virent.app/sdk",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "description": "Virent browser and server-side analytics SDK.",
   "type": "module",
   "license": "Apache-2.0",

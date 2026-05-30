@@ -10,6 +10,7 @@ export const botFamilyValues = [
 	"meta",
 	"amazon",
 	"duckduckgo",
+	"huawei",
 	"you",
 	"unknown",
 ] as const;
@@ -52,6 +53,7 @@ export interface BotTaxonomyCrawler {
 	isAiCrawler: boolean;
 	name: string;
 	patterns: readonly RegExp[];
+	sourceIds: readonly string[];
 }
 
 export interface BotTaxonomyEntry {
@@ -70,6 +72,7 @@ export interface BotClassification {
 	matchReason: string[];
 	name: string | null;
 	provider: BotProvider;
+	sourceIds: string[];
 }
 
 export type BotRuleAction = "allow" | "classify" | "deny";
@@ -83,6 +86,7 @@ export interface BotRule {
 	name: string;
 	pattern: RegExp;
 	provider?: BotProvider;
+	sourceIds?: readonly string[];
 }
 
 export type BotRuleInput = Omit<BotRule, "pattern"> & {
@@ -139,6 +143,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "GPTBot",
 				patterns: [/GPTBot/i],
+				sourceIds: ["arcjet:openai-crawler", "bots.fyi:gptbot"],
 			},
 			{
 				confidence: "high",
@@ -149,6 +154,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "OAI-SearchBot",
 				patterns: [/OAI-SearchBot/i],
+				sourceIds: ["arcjet:openai-crawler-search", "bots.fyi:oai-searchbot"],
 			},
 			{
 				confidence: "high",
@@ -157,6 +163,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "ChatGPT-User",
 				patterns: [/ChatGPT-User/i],
+				sourceIds: ["arcjet:openai-crawler-user", "bots.fyi:chatgpt-user"],
 			},
 		],
 	},
@@ -170,23 +177,39 @@ export const botCrawlerTaxonomy = [
 				examples: ["ClaudeBot/1.0 (+claudebot@anthropic.com)"],
 				isAiCrawler: true,
 				name: "ClaudeBot",
-				patterns: [/ClaudeBot/i],
+				patterns: [/ClaudeBot/i, /claudebot/i],
+				sourceIds: ["arcjet:anthropic-crawler", "bots.fyi:claudebot"],
 			},
 			{
 				confidence: "high",
 				crawlerType: "answer_engine",
-				examples: ["Claude-User/1.0"],
+				examples: ["Claude-Web"],
+				isAiCrawler: true,
+				name: "Claude-Web",
+				patterns: [/Claude-Web/i],
+				sourceIds: ["arcjet:anthropic-crawler"],
+			},
+			{
+				confidence: "high",
+				crawlerType: "answer_engine",
+				examples: [
+					"Mozilla/5.0 (compatible; Claude-User/1.0; +Claude-User@anthropic.com)",
+				],
 				isAiCrawler: true,
 				name: "Claude-User",
 				patterns: [/Claude-User/i],
+				sourceIds: ["arcjet:anthropic-crawler-user", "bots.fyi:claude-user"],
 			},
 			{
 				confidence: "high",
 				crawlerType: "ai_search",
-				examples: ["Claude-SearchBot/1.0"],
+				examples: [
+					"Mozilla/5.0 (compatible; Claude-SearchBot/1.0; +Claude-SearchBot@anthropic.com)",
+				],
 				isAiCrawler: true,
 				name: "Claude-SearchBot",
 				patterns: [/Claude-SearchBot/i],
+				sourceIds: ["arcjet:anthropic-crawler-search"],
 			},
 		],
 	},
@@ -202,15 +225,19 @@ export const botCrawlerTaxonomy = [
 				],
 				isAiCrawler: true,
 				name: "PerplexityBot",
-				patterns: [/PerplexityBot/i],
+				patterns: [/PerplexityBot/i, /PerplexityBot\//i],
+				sourceIds: ["arcjet:perplexity-crawler", "bots.fyi:perplexitybot"],
 			},
 			{
 				confidence: "high",
 				crawlerType: "answer_engine",
-				examples: ["Perplexity-User/1.0"],
+				examples: [
+					"Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko; compatible; Perplexity-User/1.0; +https://perplexity.ai/perplexity-user)",
+				],
 				isAiCrawler: true,
 				name: "Perplexity-User",
-				patterns: [/Perplexity-User/i],
+				patterns: [/Perplexity-User/i, /Perplexity-User\//i],
+				sourceIds: ["arcjet:perplexity-user"],
 			},
 		],
 	},
@@ -227,6 +254,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: false,
 				name: "Googlebot",
 				patterns: [/Googlebot/i],
+				sourceIds: ["arcjet:google-crawler", "bots.fyi:googlebot"],
 			},
 			{
 				confidence: "high",
@@ -237,6 +265,25 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "Google-Extended",
 				patterns: [/Google-Extended/i],
+				sourceIds: ["vendor:google-extended"],
+			},
+			{
+				confidence: "high",
+				crawlerType: "ai_training",
+				examples: ["Google-CloudVertexBot"],
+				isAiCrawler: true,
+				name: "Google-CloudVertexBot",
+				patterns: [/Google-CloudVertexBot/i],
+				sourceIds: ["arcjet:google-crawler-cloudvertex"],
+			},
+			{
+				confidence: "high",
+				crawlerType: "search_indexer",
+				examples: ["GoogleOther"],
+				isAiCrawler: false,
+				name: "GoogleOther",
+				patterns: [/GoogleOther/i],
+				sourceIds: ["arcjet:google-crawler-other", "bots.fyi:googleother"],
 			},
 		],
 	},
@@ -251,6 +298,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "DeepSeekBot",
 				patterns: [/DeepSeekBot/i, /DeepSeekSpider/i],
+				sourceIds: ["vendor:deepseekbot"],
 			},
 		],
 	},
@@ -265,6 +313,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "CCBot",
 				patterns: [/CCBot/i],
+				sourceIds: ["arcjet:commoncrawl-crawler", "bots.fyi:ccbot"],
 			},
 		],
 	},
@@ -279,6 +328,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "Applebot",
 				patterns: [/Applebot/i],
+				sourceIds: ["arcjet:apple-crawler", "bots.fyi:applebot"],
 			},
 		],
 	},
@@ -293,6 +343,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "Bytespider",
 				patterns: [/Bytespider/i],
+				sourceIds: ["arcjet:bytedance-crawler", "bots.fyi:bytespider"],
 			},
 		],
 	},
@@ -309,6 +360,30 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "meta-externalagent",
 				patterns: [/meta-externalagent/i],
+				sourceIds: ["arcjet:meta-crawler", "bots.fyi:meta-externalagent"],
+			},
+			{
+				confidence: "high",
+				crawlerType: "ai_search",
+				examples: ["meta-webindexer/1.0"],
+				isAiCrawler: true,
+				name: "meta-webindexer",
+				patterns: [/meta-webindexer/i],
+				sourceIds: ["bots.fyi:meta-webindexer"],
+			},
+			{
+				confidence: "high",
+				crawlerType: "answer_engine",
+				examples: [
+					"meta-externalfetcher/1.1 (+https://developers.facebook.com/docs/sharing/webmasters/crawler)",
+				],
+				isAiCrawler: true,
+				name: "meta-externalfetcher",
+				patterns: [/meta-externalfetcher/i],
+				sourceIds: [
+					"arcjet:meta-crawler-user",
+					"bots.fyi:meta-externalfetcher",
+				],
 			},
 			{
 				confidence: "high",
@@ -319,6 +394,10 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: false,
 				name: "facebookexternalhit",
 				patterns: [/facebookexternalhit/i],
+				sourceIds: [
+					"arcjet:facebook-share-crawler",
+					"bots.fyi:facebookexternalhit",
+				],
 			},
 		],
 	},
@@ -335,6 +414,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "Amazonbot",
 				patterns: [/Amazonbot/i],
+				sourceIds: ["arcjet:amazon-crawler", "bots.fyi:amazonbot"],
 			},
 		],
 	},
@@ -351,6 +431,24 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "DuckAssistBot",
 				patterns: [/DuckAssistBot/i],
+				sourceIds: ["bots.fyi:duckassistbot"],
+			},
+		],
+	},
+	{
+		family: "huawei",
+		provider: "huawei",
+		crawlers: [
+			{
+				confidence: "high",
+				crawlerType: "ai_search",
+				examples: [
+					"Mozilla/5.0 (compatible;PetalBot;+https://webmaster.petalsearch.com/site/petalbot)",
+				],
+				isAiCrawler: true,
+				name: "PetalBot",
+				patterns: [/PetalBot/i],
+				sourceIds: ["arcjet:petalsearch-crawler", "bots.fyi:petalbot"],
 			},
 		],
 	},
@@ -365,6 +463,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "YouBot",
 				patterns: [/YouBot/i],
+				sourceIds: ["arcjet:you-crawler", "bots.fyi:youbot"],
 			},
 		],
 	},
@@ -379,6 +478,7 @@ export const genericBotTaxonomy = {
 	matchReason: "generic-bot-token",
 	name: null,
 	provider: "unknown",
+	sourceIds: [],
 } as const;
 
 export const unknownBotTaxonomy = {
@@ -389,6 +489,7 @@ export const unknownBotTaxonomy = {
 	isAiCrawler: false,
 	name: null,
 	provider: "unknown",
+	sourceIds: [],
 } as const;
 
 const aiCrawlerFamilies = new Set<BotFamily>(
@@ -429,6 +530,7 @@ export const defaultBotRules: readonly BotRule[] = botCrawlerTaxonomy.flatMap(
 				name: crawler.name,
 				pattern,
 				provider: entry.provider,
+				sourceIds: crawler.sourceIds,
 			}))
 		)
 );
@@ -443,6 +545,7 @@ const emptyClassification = (reason: string): BotClassification => ({
 	matchReason: [reason],
 	name: unknownBotTaxonomy.name,
 	provider: unknownBotTaxonomy.provider,
+	sourceIds: [...unknownBotTaxonomy.sourceIds],
 });
 
 const normalizeRule = (rule: BotRuleInput): BotRule | null => {
@@ -493,6 +596,7 @@ const classifyFromRule = (
 			matchReason: [matchReason],
 			name: null,
 			provider: "unknown",
+			sourceIds: [...(rule.sourceIds ?? [])],
 		};
 	}
 
@@ -511,6 +615,7 @@ const classifyFromRule = (
 			matchReason: [matchReason],
 			name: rule.name,
 			provider: rule.provider ?? getProviderForFamily(rule.family),
+			sourceIds: [...(rule.sourceIds ?? [])],
 		};
 	}
 
@@ -525,6 +630,7 @@ const classifyFromRule = (
 		matchReason: [matchReason],
 		name: rule.name,
 		provider: rule.provider ?? getProviderForFamily(rule.family),
+		sourceIds: [...(rule.sourceIds ?? [])],
 	};
 };
 
@@ -611,6 +717,7 @@ export const classifyBotUserAgent = (
 			matchReason: [genericBotTaxonomy.matchReason],
 			name: genericBotTaxonomy.name,
 			provider: genericBotTaxonomy.provider,
+			sourceIds: [...genericBotTaxonomy.sourceIds],
 		};
 	}
 

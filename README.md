@@ -50,8 +50,13 @@ import { createVirentBotProxy } from "@virent.app/sdk/next";
 export const proxy = createVirentBotProxy({
 	siteId: "site_...",
 	writeKey: "vha_sk_...",
+	trackMode: "ai-crawlers",
 });
 ```
+
+`trackMode` defaults to `"bots"`, which skips browser-like human requests and
+sends known or generic bot requests. Use `"ai-crawlers"` when you only want
+AI/LLM crawler telemetry in Virent.
 
 ## Elysia Bot Tracking
 
@@ -63,6 +68,7 @@ export const app = new Elysia().use(
 	createVirentElysiaBotPlugin({
 		siteId: "site_...",
 		writeKey: "vha_sk_...",
+		trackMode: "ai-crawlers",
 	})
 );
 ```

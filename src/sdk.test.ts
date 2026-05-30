@@ -117,6 +117,38 @@ test("tracker skips when site credentials are missing", async () => {
 	expect(result.reason).toBe("missing-site-or-write-key");
 });
 
+test("bot tracker skips browser-like human requests by default", async () => {
+	const originalFetch = globalThis.fetch;
+	let requestCount = 0;
+
+	globalThis.fetch = (() => {
+		requestCount += 1;
+		return Promise.resolve(new Response(null, { status: 202 }));
+	}) as unknown as typeof fetch;
+
+	try {
+		const tracker = createVirentBotTracker({
+			endpoint: "http://localhost:3001/v1/ingest/bot",
+			siteId: "site_123",
+			writeKey: "vha_sk_test",
+		});
+		const result = await tracker.trackRequest(
+			new Request("https://example.com/docs", {
+				headers: {
+					"user-agent":
+						"Mozilla/5.0 AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
+				},
+			})
+		);
+
+		expect(result.accepted).toBe(false);
+		expect(result.reason).toBe("not-a-bot");
+		expect(requestCount).toBe(0);
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
 test("bot tracker sends crawler ingest payloads", async () => {
 	const originalFetch = globalThis.fetch;
 	const requests: Array<{
@@ -202,6 +234,7 @@ test("bot tracker sends crawler ingest payloads", async () => {
 			name: "GPTBot",
 			provider: "openai",
 		});
+		expect(payload.classification.sourceIds).toContain("arcjet:openai-crawler");
 		expect(payload.rulesMatched[0]).toBe("classify:openai:GPTBot");
 	} finally {
 		globalThis.fetch = originalFetch;
