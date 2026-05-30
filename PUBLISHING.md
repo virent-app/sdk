@@ -4,17 +4,29 @@
 development.
 
 `https://github.com/virent-app/sdk` is the public publishing mirror used for npm
-Trusted Publishing and provenance. Do not hand-edit SDK source in the public
-repository. Generate it from this package instead:
+Trusted Publishing and provenance. Team members can clone both repositories
+anywhere locally. Set these shell variables to match your machine:
 
 ```bash
+export VIRENT_REPO_DIR="$HOME/path/to/virent"
+export VIRENT_SDK_REPO_DIR="$HOME/path/to/virent-sdk"
+```
+
+Do not hand-edit SDK source in the public repository. Generate it from this
+package instead:
+
+```bash
+cd "$VIRENT_REPO_DIR"
 bun --filter @virent.app/sdk mirror:public
 ```
 
 The sync task writes a standalone public repository that can install, typecheck,
 test, build, and publish without private workspace packages. It rewrites the
 public `package.json` and `tsconfig.json` from monorepo metadata so npm
-provenance points to a complete public source tree.
+provenance points to a complete public source tree. If `VIRENT_SDK_REPO_DIR` is
+not set, the sync task defaults to a sibling `../virent-sdk` directory next to
+the private monorepo. The sync task preserves the public `bun.lock` when it is
+still valid, and refreshes it only when dependency metadata changes.
 
 ## One-Time Setup
 
@@ -62,7 +74,7 @@ Private monorepo:
 
 Public mirror:
 
-- Commit generated changes in `/Users/brunolelis/Developer/virent-sdk`
+- Commit generated changes in `$VIRENT_SDK_REPO_DIR`
 - Push `main`
 
 ### 3. Create the release tag in the public mirror
@@ -70,7 +82,7 @@ Public mirror:
 The tag must match `package.json` exactly.
 
 ```bash
-cd /Users/brunolelis/Developer/virent-sdk
+cd "$VIRENT_SDK_REPO_DIR"
 git tag vX.Y.Z
 git push origin vX.Y.Z
 ```
@@ -104,7 +116,7 @@ After the workflow succeeds, the package is staged on npm but not yet live on
 the registry. List the staged release:
 
 ```bash
-cd /Users/brunolelis/Developer/virent-sdk
+cd "$VIRENT_SDK_REPO_DIR"
 /opt/homebrew/bin/npx -y npm@11.16.0 stage list @virent.app/sdk --json
 ```
 
