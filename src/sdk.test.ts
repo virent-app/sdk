@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, test } from "vitest";
 import {
 	createVirentBrowserClient,
 	identify,
@@ -11,6 +11,8 @@ import {
 } from "./browser";
 import { createVirentBotProxy } from "./next";
 import { createVirentBotTracker } from "./server";
+
+const virentIdPattern = /^vnt_/;
 
 class MemoryStorage implements Storage {
 	private readonly values = new Map<string, string>();
@@ -117,7 +119,7 @@ test("tracker skips when site credentials are missing", async () => {
 	expect(result.reason).toBe("missing-site-or-write-key");
 });
 
-test("bot tracker skips browser-like human requests by default", async () => {
+test("explicit bots mode skips browser-like human requests", async () => {
 	const originalFetch = globalThis.fetch;
 	let requestCount = 0;
 
@@ -128,8 +130,9 @@ test("bot tracker skips browser-like human requests by default", async () => {
 
 	try {
 		const tracker = createVirentBotTracker({
-			endpoint: "http://localhost:3001/v1/ingest/bot",
+			endpoint: "http://localhost:3000/v1/ingest/bot",
 			siteId: "site_123",
+			trackMode: "bots",
 			writeKey: "vha_sk_test",
 		});
 		const result = await tracker.trackRequest(
@@ -174,16 +177,17 @@ test("bot tracker sends crawler ingest payloads", async () => {
 
 	try {
 		const tracker = createVirentBotTracker({
-			endpoint: "http://localhost:3001/v1/ingest/bot",
+			endpoint: "http://localhost:3000/v1/ingest/bot",
 			ipHashSalt: "test-salt",
 			siteId: "site_123",
+			trustedProxy: "development",
 			writeKey: "vha_sk_test",
 		});
 		const result = await tracker.trackRequest(
 			new Request("https://example.com/docs?q=ai", {
 				headers: {
 					accept: "text/html",
-					referer: "https://chatgpt.com/",
+					referer: "https://chatgpt.com/?token=private",
 					"user-agent": "GPTBot/1.0",
 					"x-forwarded-for": "203.0.113.10",
 				},
@@ -199,7 +203,7 @@ test("bot tracker sends crawler ingest payloads", async () => {
 		expect(result.accepted).toBe(true);
 		expect(result.status).toBe(202);
 		expect(requests).toHaveLength(1);
-		expect(requests[0]?.url).toBe("http://localhost:3001/v1/ingest/bot");
+		expect(requests[0]?.url).toBe("http://localhost:3000/v1/ingest/bot");
 		expect(requests[0]?.init?.headers).toEqual({
 			Authorization: "Bearer vha_sk_test",
 			"Content-Type": "application/json",
@@ -212,15 +216,13 @@ test("bot tracker sends crawler ingest payloads", async () => {
 			host: "example.com",
 			method: "GET",
 			path: "/docs",
-			query: {
-				q: "ai",
-			},
-			referer: "https://chatgpt.com/",
+			query: {},
+			referer: null,
 			requestId: "req_123",
 			siteId: "site_123",
 			statusCode: 200,
 			timestamp: "2026-05-09T10:00:00.000Z",
-			url: "https://example.com/docs?q=ai",
+			url: "https://example.com/docs",
 			userAgent: "GPTBot/1.0",
 		});
 		expect(typeof payload.ipHash).toBe("string");
@@ -260,7 +262,7 @@ test("bot tracker propagates accepted false responses", async () => {
 
 	try {
 		const tracker = createVirentBotTracker({
-			endpoint: "http://localhost:3001/v1/ingest/bot",
+			endpoint: "http://localhost:3000/v1/ingest/bot",
 			siteId: "site_123",
 			writeKey: "vha_sk_test",
 		});
@@ -309,7 +311,7 @@ test("browser client sends validated pageview payloads", async () => {
 			referrer: "https://search.example/?q=virent",
 			title: "Pricing",
 		},
-		endpoint: "http://localhost:3001/v1/ingest/batch",
+		endpoint: "http://localhost:3000/v1/ingest/batch",
 		location: {
 			hostname: "example.com",
 			href: "https://example.com/pricing?utm_source=google&utm_campaign=mvp",
@@ -325,7 +327,7 @@ test("browser client sends validated pageview payloads", async () => {
 	expect(result.status).toBe(202);
 	expect(harness.requests).toHaveLength(1);
 	expect(harness.requests[0]?.url).toBe(
-		"http://localhost:3001/v1/ingest/batch"
+		"http://localhost:3000/v1/ingest/batch"
 	);
 	expect(harness.requests[0]?.init?.headers).toEqual({
 		"Content-Type": "application/json",
@@ -348,9 +350,9 @@ test("browser client sends validated pageview payloads", async () => {
 		type: "pageview",
 		url: "https://example.com/pricing?utm_source=google&utm_campaign=mvp",
 	});
-	expect(event.visitorId).toStartWith("vnt_");
-	expect(event.sessionId).toStartWith("vnt_");
-	expect(event.event_id).toStartWith("vnt_");
+	expect(event.visitorId).toMatch(virentIdPattern);
+	expect(event.sessionId).toMatch(virentIdPattern);
+	expect(event.event_id).toMatch(virentIdPattern);
 });
 
 test("browser client validates payload before sending", async () => {
@@ -381,7 +383,7 @@ test("browser client sends validated custom event payloads", async () => {
 			referrer: "https://referrer.example/",
 			title: "Ignored for custom events",
 		},
-		endpoint: "http://localhost:3001/v1/ingest/batch",
+		endpoint: "http://localhost:3000/v1/ingest/batch",
 		location: {
 			hostname: "example.com",
 			href: "https://example.com/pricing",
@@ -421,8 +423,8 @@ test("browser client sends validated custom event payloads", async () => {
 		timestamp: "2026-05-09T11:00:00.000Z",
 		type: "event",
 	});
-	expect(event.visitorId).toStartWith("vnt_");
-	expect(event.sessionId).toStartWith("vnt_");
+	expect(event.visitorId).toMatch(virentIdPattern);
+	expect(event.sessionId).toMatch(virentIdPattern);
 	expect(event.event_id).toBe("signup-123");
 });
 
@@ -430,7 +432,7 @@ test("browser client identifies visitors with customer user ids", async () => {
 	const harness = createBrowserHarness();
 	const client = createVirentBrowserClient({
 		...harness,
-		endpoint: "http://localhost:3001/v1/ingest/batch",
+		endpoint: "http://localhost:3000/v1/ingest/batch",
 		location: {
 			hostname: "example.com",
 			href: "https://example.com/account",
@@ -448,7 +450,7 @@ test("browser client identifies visitors with customer user ids", async () => {
 	expect(result.accepted).toBe(true);
 	expect(result.status).toBe(202);
 	expect(harness.requests).toHaveLength(1);
-	expect(harness.requests[0]?.url).toBe("http://localhost:3001/v1/identify");
+	expect(harness.requests[0]?.url).toBe("http://localhost:3000/v1/identify");
 	expect(harness.requests[0]?.init?.headers).toEqual({
 		"Content-Type": "application/json",
 		"x-api-key": "vha_pk_test",
@@ -462,14 +464,14 @@ test("browser client identifies visitors with customer user ids", async () => {
 		},
 		userId: "customer_123",
 	});
-	expect(payload.visitorId).toStartWith("vnt_");
+	expect(payload.visitorId).toMatch(virentIdPattern);
 });
 
 test("browser client tracks idempotent goal conversions", async () => {
 	const harness = createBrowserHarness();
 	const client = createVirentBrowserClient({
 		...harness,
-		endpoint: "http://localhost:3001/v1/ingest/batch",
+		endpoint: "http://localhost:3000/v1/ingest/batch",
 		location: {
 			hostname: "example.com",
 			href: "https://example.com/pricing",
@@ -486,7 +488,7 @@ test("browser client tracks idempotent goal conversions", async () => {
 	expect(result.accepted).toBe(true);
 	expect(result.status).toBe(202);
 	expect(harness.requests).toHaveLength(1);
-	expect(harness.requests[0]?.url).toBe("http://localhost:3001/v1/track/goal");
+	expect(harness.requests[0]?.url).toBe("http://localhost:3000/v1/track/goal");
 
 	const payload = JSON.parse(String(harness.requests[0]?.init?.body));
 
@@ -496,7 +498,7 @@ test("browser client tracks idempotent goal conversions", async () => {
 		name: "signup_completed",
 		timestamp: "2026-05-09T12:00:00.000Z",
 	});
-	expect(payload.visitorId).toStartWith("vnt_");
+	expect(payload.visitorId).toMatch(virentIdPattern);
 });
 
 test("browser client validates custom event payloads before sending", async () => {
@@ -586,4 +588,66 @@ test("initVirent sends the initial pageview by default", async () => {
 	expect(harness.requests).toHaveLength(5);
 
 	resetVirent();
+});
+
+test("default mode sends unknown page requests with sanitized metadata", async () => {
+	const originalFetch = globalThis.fetch;
+	let payload: Record<string, unknown> | undefined;
+	globalThis.fetch = ((_url, init) => {
+		payload = JSON.parse(String(init?.body));
+		return Promise.resolve(
+			Response.json({ accepted: false, reason: "not-ai-traffic" })
+		);
+	}) as typeof fetch;
+	try {
+		const tracker = createVirentBotTracker({
+			siteId: "site_123",
+			writeKey: "test",
+		});
+		const result = await tracker.trackRequest(
+			new Request("https://example.com/docs?token=private#secret", {
+				headers: {
+					authorization: "Bearer secret",
+					cookie: "session=secret",
+					referer: "https://example.com/?token=secret",
+					"user-agent": "FutureAgent/1",
+				},
+			})
+		);
+		expect(payload?.url).toBe("https://example.com/docs");
+		expect(payload?.query).toEqual({});
+		expect(JSON.stringify(payload)).not.toContain("secret");
+		expect(JSON.stringify(payload)).not.toContain("private");
+		expect(result.reason).toBe("not-ai-traffic");
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
+test("all mode excludes assets and internal requests", async () => {
+	const originalFetch = globalThis.fetch;
+	let count = 0;
+	globalThis.fetch = (() => {
+		count += 1;
+		return Promise.resolve(new Response());
+	}) as typeof fetch;
+	try {
+		const tracker = createVirentBotTracker({
+			siteId: "site_123",
+			trackMode: "all",
+			writeKey: "test",
+		});
+		const results = await Promise.all(
+			["/_next/data/test", "/api/auth", "/v1/ingest/bot", "/logo.svg"].map(
+				(path) =>
+					tracker.trackRequest(new Request(`https://example.com${path}`))
+			)
+		);
+		expect(
+			results.every((result) => result.reason === "ineligible-request")
+		).toBe(true);
+		expect(count).toBe(0);
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
 });

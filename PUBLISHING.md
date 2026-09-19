@@ -17,7 +17,7 @@ package instead:
 
 ```bash
 cd "$VIRENT_REPO_DIR"
-bun --filter @virent.app/sdk mirror:public
+pnpm --filter @virent.app/sdk mirror:public
 ```
 
 The sync task writes a standalone public repository that can install, typecheck,
@@ -25,8 +25,8 @@ test, build, and publish without private workspace packages. It rewrites the
 public `package.json` and `tsconfig.json` from monorepo metadata so npm
 provenance points to a complete public source tree. If `VIRENT_SDK_REPO_DIR` is
 not set, the sync task defaults to a sibling `../virent-sdk` directory next to
-the private monorepo. The sync task preserves the public `bun.lock` when it is
-still valid, and refreshes it only when dependency metadata changes.
+the private monorepo. The sync task preserves the public `pnpm-lock.yaml` when
+it is still valid, and refreshes it only when dependency metadata changes.
 
 ## One-Time Setup
 
@@ -57,12 +57,12 @@ npm account policy:
 ### 1. Validate from the monorepo
 
 ```bash
-bun --filter @virent.app/sdk check-types
-bun --filter @virent.app/sdk test
-bun --filter @virent.app/sdk build
-bun --filter @virent.app/sdk pack:dry-run
-bun --filter @virent.app/sdk mirror:public
-bun --filter @virent.app/sdk mirror:public:check
+pnpm --filter @virent.app/sdk check-types
+pnpm --filter @virent.app/sdk test
+pnpm --filter @virent.app/sdk build
+pnpm --filter @virent.app/sdk pack:dry-run
+pnpm --filter @virent.app/sdk mirror:public
+pnpm --filter @virent.app/sdk mirror:public:check
 ```
 
 ### 2. Commit and push both repositories
@@ -89,7 +89,7 @@ git push origin vX.Y.Z
 
 This starts the GitHub Actions publish workflow, which:
 
-- installs dependencies with Bun;
+- installs dependencies with pnpm;
 - verifies the tag matches `@virent.app/sdk@X.Y.Z`;
 - runs `check-types`, `test`, `build`, and `pack:dry-run`;
 - runs `npm stage publish --access public --tag latest --provenance`.
@@ -175,6 +175,6 @@ Workflow succeeds but npm `latest` still shows the old version:
 
 `mirror:public:check` reports the public repo is out of sync after a local build:
 
-- Regenerate the mirror with `bun --filter @virent.app/sdk mirror:public`.
+- Regenerate the mirror with `pnpm --filter @virent.app/sdk mirror:public`.
 - The checker ignores generated `dist/` and tarball artifacts, so only tracked
   source drift should remain.

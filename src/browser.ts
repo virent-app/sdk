@@ -149,8 +149,8 @@ interface StorageLike {
 	setItem(key: string, value: string): void;
 }
 
-const defaultEndpoint = "https://api.virent.com/v1/ingest/batch";
-const localEndpoint = "http://localhost:3001/v1/ingest/batch";
+const defaultEndpoint = "https://virent.app/v1/ingest/batch";
+const localEndpoint = "http://localhost:3000/v1/ingest/batch";
 const defaultSessionTimeoutMs = 30 * 60 * 1000;
 const visitorStorageKey = "virent:visitor-id";
 const sessionStorageKey = "virent:session-id";
@@ -332,7 +332,7 @@ const getReferrer = (
 	documentReferrer: string | undefined
 ) => {
 	if (inputReferrer === null) {
-		return undefined;
+		return;
 	}
 
 	const referrer = inputReferrer ?? documentReferrer;

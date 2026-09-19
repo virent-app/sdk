@@ -1,32 +1,32 @@
 {
   "$schema": "https://json.schemastore.org/tsconfig",
   "compilerOptions": {
-    "target": "ESNext",
-    "module": "ESNext",
-    "moduleResolution": "bundler",
-    "types": [
-      "bun"
-    ],
+    "allowSyntheticDefaultImports": true,
     "declaration": true,
     "declarationMap": true,
-    "sourceMap": true,
-    "outDir": "dist",
-    "verbatimModuleSyntax": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "resolveJsonModule": true,
-    "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "isolatedModules": true,
-    "noUncheckedIndexedAccess": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noFallthroughCasesInSwitch": true,
     "lib": [
       "ESNext",
       "DOM"
     ],
-    "strictNullChecks": true
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedIndexedAccess": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "outDir": "dist",
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "sourceMap": true,
+    "strict": true,
+    "strictNullChecks": true,
+    "target": "ESNext",
+    "types": [
+      "node"
+    ],
+    "verbatimModuleSyntax": true
   }
 }

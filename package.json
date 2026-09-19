@@ -1,18 +1,7 @@
 {
   "name": "@virent.app/sdk",
-  "version": "0.1.3",
+  "version": "0.2.0",
   "description": "Virent browser and server-side analytics SDK.",
-  "type": "module",
-  "license": "Apache-2.0",
-  "sideEffects": false,
-  "homepage": "https://virent.app",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/virent-app/sdk.git"
-  },
-  "bugs": {
-    "email": "virent.app@gmail.com"
-  },
   "keywords": [
     "analytics",
     "ai",
@@ -20,14 +9,17 @@
     "crawler",
     "virent"
   ],
-  "files": [
-    "dist/*.d.mts",
-    "dist/**/*.mjs",
-    "LICENSE",
-    "README.md"
-  ],
-  "main": "./dist/index.mjs",
-  "types": "./dist/index.d.mts",
+  "homepage": "https://virent.app",
+  "bugs": {
+    "email": "virent.app@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/virent-app/sdk.git"
+  },
+  "license": "Apache-2.0",
+  "sideEffects": false,
+  "type": "module",
   "exports": {
     ".": {
       "types": "./dist/index.d.mts",
@@ -38,11 +30,6 @@
       "types": "./dist/browser.d.mts",
       "import": "./dist/browser.mjs",
       "default": "./dist/browser.mjs"
-    },
-    "./elysia": {
-      "types": "./dist/elysia.d.mts",
-      "import": "./dist/elysia.mjs",
-      "default": "./dist/elysia.mjs"
     },
     "./next": {
       "types": "./dist/next.d.mts",
@@ -56,29 +43,33 @@
     },
     "./package.json": "./package.json"
   },
+  "main": "./dist/index.mjs",
+  "types": "./dist/index.d.mts",
+  "files": [
+    "dist/*.d.mts",
+    "dist/**/*.mjs",
+    "LICENSE",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsdown --config tsdown.config.mjs --config-loader native",
+    "check-types": "tsc --noEmit",
+    "prepack": "pnpm run build",
+    "pack:dry-run": "npm pack --dry-run",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@types/node": "^26.6.1",
+    "tsdown": "^0.23.0",
+    "tsx": "^4.23.13",
+    "typescript": "^7.0.2",
+    "vitest": "^5.0.1"
+  },
   "publishConfig": {
     "access": "public"
   },
-  "scripts": {
-    "build": "tsdown",
-    "check-types": "tsc --noEmit",
-    "pack:dry-run": "npm pack --dry-run",
-    "prepack": "bun run build",
-    "test": "bun test"
+  "engines": {
+    "node": "24.x"
   },
-  "peerDependencies": {
-    "elysia": "^1.4.28"
-  },
-  "peerDependenciesMeta": {
-    "elysia": {
-      "optional": true
-    }
-  },
-  "devDependencies": {
-    "@types/bun": "^1.3.11",
-    "elysia": "^1.4.28",
-    "tsdown": "^0.21.5",
-    "typescript": "^6.0.2"
-  },
-  "packageManager": "bun@1.3.7"
+  "packageManager": "pnpm@11.9.0"
 }

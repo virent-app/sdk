@@ -3,12 +3,11 @@ import { defineConfig } from "tsdown";
 export default defineConfig({
 	clean: true,
 	deps: {
-		neverBundle: ["elysia", "next"],
+		neverBundle: ["next"],
 	},
 	dts: true,
 	entry: {
 		browser: "./src/browser.ts",
-		elysia: "./src/elysia.ts",
 		index: "./src/index.ts",
 		next: "./src/next.ts",
 		server: "./src/server.ts",

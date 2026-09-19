@@ -131,8 +131,6 @@ const ipHashLength = 32;
 
 export const botCrawlerTaxonomy = [
 	{
-		family: "openai",
-		provider: "openai",
 		crawlers: [
 			{
 				confidence: "high",
@@ -143,7 +141,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "GPTBot",
 				patterns: [/GPTBot/i],
-				sourceIds: ["arcjet:openai-crawler", "bots.fyi:gptbot"],
+				sourceIds: ["arcjet:openai-crawler"],
 			},
 			{
 				confidence: "high",
@@ -154,7 +152,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "OAI-SearchBot",
 				patterns: [/OAI-SearchBot/i],
-				sourceIds: ["arcjet:openai-crawler-search", "bots.fyi:oai-searchbot"],
+				sourceIds: ["arcjet:openai-crawler-search"],
 			},
 			{
 				confidence: "high",
@@ -163,13 +161,13 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "ChatGPT-User",
 				patterns: [/ChatGPT-User/i],
-				sourceIds: ["arcjet:openai-crawler-user", "bots.fyi:chatgpt-user"],
+				sourceIds: ["arcjet:openai-crawler-user"],
 			},
 		],
+		family: "openai",
+		provider: "openai",
 	},
 	{
-		family: "anthropic",
-		provider: "anthropic",
 		crawlers: [
 			{
 				confidence: "high",
@@ -178,7 +176,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "ClaudeBot",
 				patterns: [/ClaudeBot/i, /claudebot/i],
-				sourceIds: ["arcjet:anthropic-crawler", "bots.fyi:claudebot"],
+				sourceIds: ["arcjet:anthropic-crawler"],
 			},
 			{
 				confidence: "high",
@@ -198,7 +196,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "Claude-User",
 				patterns: [/Claude-User/i],
-				sourceIds: ["arcjet:anthropic-crawler-user", "bots.fyi:claude-user"],
+				sourceIds: ["arcjet:anthropic-crawler-user"],
 			},
 			{
 				confidence: "high",
@@ -212,10 +210,10 @@ export const botCrawlerTaxonomy = [
 				sourceIds: ["arcjet:anthropic-crawler-search"],
 			},
 		],
+		family: "anthropic",
+		provider: "anthropic",
 	},
 	{
-		family: "perplexity",
-		provider: "perplexity",
 		crawlers: [
 			{
 				confidence: "high",
@@ -226,7 +224,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "PerplexityBot",
 				patterns: [/PerplexityBot/i, /PerplexityBot\//i],
-				sourceIds: ["arcjet:perplexity-crawler", "bots.fyi:perplexitybot"],
+				sourceIds: ["arcjet:perplexity-crawler"],
 			},
 			{
 				confidence: "high",
@@ -240,10 +238,10 @@ export const botCrawlerTaxonomy = [
 				sourceIds: ["arcjet:perplexity-user"],
 			},
 		],
+		family: "perplexity",
+		provider: "perplexity",
 	},
 	{
-		family: "google",
-		provider: "google",
 		crawlers: [
 			{
 				confidence: "high",
@@ -254,7 +252,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: false,
 				name: "Googlebot",
 				patterns: [/Googlebot/i],
-				sourceIds: ["arcjet:google-crawler", "bots.fyi:googlebot"],
+				sourceIds: ["arcjet:google-crawler"],
 			},
 			{
 				confidence: "high",
@@ -266,6 +264,24 @@ export const botCrawlerTaxonomy = [
 				name: "Google-Extended",
 				patterns: [/Google-Extended/i],
 				sourceIds: ["vendor:google-extended"],
+			},
+			{
+				confidence: "high",
+				crawlerType: "answer_engine",
+				examples: ["Mozilla/5.0 (compatible; Google-Agent)"],
+				isAiCrawler: true,
+				name: "Google-Agent",
+				patterns: [/Google-Agent\b/i],
+				sourceIds: ["vendor:google-agent"],
+			},
+			{
+				confidence: "high",
+				crawlerType: "answer_engine",
+				examples: ["Mozilla/5.0 (compatible; Google-GeminiNotebook)"],
+				isAiCrawler: true,
+				name: "Google-GeminiNotebook",
+				patterns: [/Google-GeminiNotebook\b/i, /Google-NotebookLM\b/i],
+				sourceIds: ["vendor:google-gemininotebook"],
 			},
 			{
 				confidence: "high",
@@ -283,13 +299,13 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: false,
 				name: "GoogleOther",
 				patterns: [/GoogleOther/i],
-				sourceIds: ["arcjet:google-crawler-other", "bots.fyi:googleother"],
+				sourceIds: ["arcjet:google-crawler-other"],
 			},
 		],
+		family: "google",
+		provider: "google",
 	},
 	{
-		family: "deepseek",
-		provider: "deepseek",
 		crawlers: [
 			{
 				confidence: "medium",
@@ -301,10 +317,10 @@ export const botCrawlerTaxonomy = [
 				sourceIds: ["vendor:deepseekbot"],
 			},
 		],
+		family: "deepseek",
+		provider: "deepseek",
 	},
 	{
-		family: "common-crawler",
-		provider: "common-crawler",
 		crawlers: [
 			{
 				confidence: "high",
@@ -313,13 +329,13 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "CCBot",
 				patterns: [/CCBot/i],
-				sourceIds: ["arcjet:commoncrawl-crawler", "bots.fyi:ccbot"],
+				sourceIds: ["arcjet:commoncrawl-crawler"],
 			},
 		],
+		family: "common-crawler",
+		provider: "common-crawler",
 	},
 	{
-		family: "apple",
-		provider: "apple",
 		crawlers: [
 			{
 				confidence: "high",
@@ -328,13 +344,13 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "Applebot",
 				patterns: [/Applebot/i],
-				sourceIds: ["arcjet:apple-crawler", "bots.fyi:applebot"],
+				sourceIds: ["arcjet:apple-crawler"],
 			},
 		],
+		family: "apple",
+		provider: "apple",
 	},
 	{
-		family: "bytedance",
-		provider: "bytedance",
 		crawlers: [
 			{
 				confidence: "high",
@@ -343,13 +359,13 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "Bytespider",
 				patterns: [/Bytespider/i],
-				sourceIds: ["arcjet:bytedance-crawler", "bots.fyi:bytespider"],
+				sourceIds: ["arcjet:bytedance-crawler"],
 			},
 		],
+		family: "bytedance",
+		provider: "bytedance",
 	},
 	{
-		family: "meta",
-		provider: "meta",
 		crawlers: [
 			{
 				confidence: "high",
@@ -360,7 +376,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "meta-externalagent",
 				patterns: [/meta-externalagent/i],
-				sourceIds: ["arcjet:meta-crawler", "bots.fyi:meta-externalagent"],
+				sourceIds: ["arcjet:meta-crawler"],
 			},
 			{
 				confidence: "high",
@@ -369,7 +385,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "meta-webindexer",
 				patterns: [/meta-webindexer/i],
-				sourceIds: ["bots.fyi:meta-webindexer"],
+				sourceIds: ["vendor:meta-webindexer"],
 			},
 			{
 				confidence: "high",
@@ -380,10 +396,7 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "meta-externalfetcher",
 				patterns: [/meta-externalfetcher/i],
-				sourceIds: [
-					"arcjet:meta-crawler-user",
-					"bots.fyi:meta-externalfetcher",
-				],
+				sourceIds: ["arcjet:meta-crawler-user"],
 			},
 			{
 				confidence: "high",
@@ -394,16 +407,13 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: false,
 				name: "facebookexternalhit",
 				patterns: [/facebookexternalhit/i],
-				sourceIds: [
-					"arcjet:facebook-share-crawler",
-					"bots.fyi:facebookexternalhit",
-				],
+				sourceIds: ["arcjet:facebook-share-crawler"],
 			},
 		],
+		family: "meta",
+		provider: "meta",
 	},
 	{
-		family: "amazon",
-		provider: "amazon",
 		crawlers: [
 			{
 				confidence: "high",
@@ -414,13 +424,13 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "Amazonbot",
 				patterns: [/Amazonbot/i],
-				sourceIds: ["arcjet:amazon-crawler", "bots.fyi:amazonbot"],
+				sourceIds: ["arcjet:amazon-crawler"],
 			},
 		],
+		family: "amazon",
+		provider: "amazon",
 	},
 	{
-		family: "duckduckgo",
-		provider: "duckduckgo",
 		crawlers: [
 			{
 				confidence: "high",
@@ -431,13 +441,13 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "DuckAssistBot",
 				patterns: [/DuckAssistBot/i],
-				sourceIds: ["bots.fyi:duckassistbot"],
+				sourceIds: ["vendor:duckassistbot"],
 			},
 		],
+		family: "duckduckgo",
+		provider: "duckduckgo",
 	},
 	{
-		family: "huawei",
-		provider: "huawei",
 		crawlers: [
 			{
 				confidence: "high",
@@ -448,13 +458,13 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "PetalBot",
 				patterns: [/PetalBot/i],
-				sourceIds: ["arcjet:petalsearch-crawler", "bots.fyi:petalbot"],
+				sourceIds: ["arcjet:petalsearch-crawler"],
 			},
 		],
+		family: "huawei",
+		provider: "huawei",
 	},
 	{
-		family: "you",
-		provider: "you",
 		crawlers: [
 			{
 				confidence: "high",
@@ -463,11 +473,33 @@ export const botCrawlerTaxonomy = [
 				isAiCrawler: true,
 				name: "YouBot",
 				patterns: [/YouBot/i],
-				sourceIds: ["arcjet:you-crawler", "bots.fyi:youbot"],
+				sourceIds: ["arcjet:you-crawler"],
 			},
 		],
+		family: "you",
+		provider: "you",
 	},
 ] as const satisfies readonly BotTaxonomyEntry[];
+
+const installableAiCrawlerPatternSources: string[] = [];
+
+for (const entry of botCrawlerTaxonomy as readonly BotTaxonomyEntry[]) {
+	for (const crawler of entry.crawlers) {
+		// Google-Extended is a robots.txt product token, not an HTTP user agent.
+		if (!(crawler.isAiCrawler && crawler.name !== "Google-Extended")) {
+			continue;
+		}
+
+		for (const pattern of crawler.patterns) {
+			if (!installableAiCrawlerPatternSources.includes(pattern.source)) {
+				installableAiCrawlerPatternSources.push(pattern.source);
+			}
+		}
+	}
+}
+
+export const aiCrawlerUserAgentPatternSource =
+	installableAiCrawlerPatternSources.join("|");
 
 export const genericBotTaxonomy = {
 	classificationState: "generic",

@@ -6,7 +6,7 @@ analytics.
 ## Install
 
 ```bash
-npm install @virent.app/sdk
+npm install @virent.app/sdk@^0.2.0
 ```
 
 Use the documented subpath imports to keep client bundles small:
@@ -14,7 +14,6 @@ Use the documented subpath imports to keep client bundles small:
 - `@virent.app/sdk/browser` for browser analytics.
 - `@virent.app/sdk/server` for framework-independent bot tracking.
 - `@virent.app/sdk/next` for Next.js bot tracking.
-- `@virent.app/sdk/elysia` for Elysia bot tracking.
 
 ## Browser Tracking
 
@@ -48,30 +47,23 @@ trackGoal({
 import { createVirentBotProxy } from "@virent.app/sdk/next";
 
 export const proxy = createVirentBotProxy({
-	siteId: "site_...",
-	writeKey: "vha_sk_...",
-	trackMode: "ai-crawlers",
+	siteId: process.env.VIRENT_SITE_ID,
+	writeKey: process.env.VIRENT_INGEST_SECRET,
 });
 ```
 
-`trackMode` defaults to `"bots"`, which skips browser-like human requests and
-sends known or generic bot requests. Use `"ai-crawlers"` when you only want
-AI/LLM crawler telemetry in Virent.
-
-## Elysia Bot Tracking
-
-```ts
-import { Elysia } from "elysia";
-import { createVirentElysiaBotPlugin } from "@virent.app/sdk/elysia";
-
-export const app = new Elysia().use(
-	createVirentElysiaBotPlugin({
-		siteId: "site_...",
-		writeKey: "vha_sk_...",
-		trackMode: "ai-crawlers",
-	})
-);
-```
+Since 0.2.0, the default sends eligible GET/HEAD page requests to Virent for
+central classification. No `trackMode` or sanitization code is needed.
+Assets and internal routes are skipped. Queries, URL credentials, fragments,
+referrers, cookies, authorization headers, bodies, city and region are never sent.
+Only allowlisted headers are sent. Paths and user agents remain necessary for
+analytics; exclude private routes in your framework matcher if they contain
+sensitive identifiers. Country is retained; IP hashing requires explicit proxy trust.
+Non-AI requests are discarded by Virent before bot-log storage or billing.
+The broader default increases ingestion traffic and is a behavioral change from
+0.1.x. Explicit `"bots"` and `"ai-crawlers"` modes remain supported but filter
+locally and may miss newly recognized agents. Privacy protections apply in every mode.
+Use the endpoint supplied by your Virent installation guide when testing staging.
 
 ## Exports
 
@@ -79,7 +71,6 @@ export const app = new Elysia().use(
   tracking.
 - `@virent.app/sdk/server`: framework-independent bot request tracking.
 - `@virent.app/sdk/next`: Next.js proxy helper for bot tracking.
-- `@virent.app/sdk/elysia`: Elysia plugin for bot tracking.
 
 ## Support
 

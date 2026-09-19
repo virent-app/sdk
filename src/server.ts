@@ -1,3 +1,4 @@
+import { isIP } from "node:net";
 import {
 	classifyBotUserAgent as classifyBotUserAgentInternal,
 	hashIpAddress,
@@ -99,7 +100,9 @@ export interface VirentBotTrackerOptions {
 	endpoint?: string;
 	ipHashSalt?: string;
 	siteId?: string;
+	/** Defaults to all eligible page requests; Virent classifies centrally. */
 	trackMode?: "ai-crawlers" | "all" | "bots";
+	trustedProxy?: "development" | "none" | "vercel";
 	writeKey?: string;
 }
 
@@ -124,45 +127,43 @@ export interface VirentBotTracker {
 	): Promise<TrackBotRequestResult>;
 }
 
-const defaultEndpoint = "https://api.virent.com/v1/ingest/bot";
+const defaultEndpoint = "https://virent.app/v1/ingest/bot";
+const internalPathPattern = /^\/(?:api|_next|v1\/ingest)(?:\/|$)/i;
+const assetPathPattern =
+	/\.(?:avif|bmp|css|eot|gif|ico|jpe?g|js|map|mjs|mp3|mp4|ogg|otf|png|svg|ttf|webm|webp|woff2?)$/i;
 const requestIdHeader = "x-request-id";
-const forwardedForHeader = "x-forwarded-for";
-const realIpHeader = "x-real-ip";
-
 const getHeader = (headers: Headers, name: string) =>
 	headers.get(name)?.trim() || null;
 
-const getClientIpAddress = (headers: Headers) => {
-	const forwardedFor = getHeader(headers, forwardedForHeader);
-
-	if (forwardedFor) {
-		const [firstIp] = forwardedFor.split(",");
-		return firstIp?.trim() || null;
+const normalizeIpAddress = (value: string | null) => {
+	if (!(value && value.length <= 64 && isIP(value))) {
+		return null;
 	}
 
-	return getHeader(headers, realIpHeader);
+	return value.toLowerCase();
 };
 
-const getQueryObject = (url: URL): Record<string, string | string[]> => {
-	const output: Record<string, string | string[]> = {};
+const getFirstHeaderValue = (value: string | null) =>
+	value?.split(",", 1)[0]?.trim() || null;
 
-	for (const [key, value] of url.searchParams.entries()) {
-		const existing = output[key];
-
-		if (Array.isArray(existing)) {
-			existing.push(value);
-			continue;
-		}
-
-		if (existing !== undefined) {
-			output[key] = [existing, value];
-			continue;
-		}
-
-		output[key] = value;
+const getClientIpAddress = (
+	headers: Headers,
+	trustedProxy: NonNullable<VirentBotTrackerOptions["trustedProxy"]>
+) => {
+	if (trustedProxy === "vercel") {
+		return normalizeIpAddress(
+			getFirstHeaderValue(headers.get("x-vercel-forwarded-for"))
+		);
 	}
 
-	return output;
+	if (trustedProxy === "development") {
+		return normalizeIpAddress(
+			getFirstHeaderValue(headers.get("x-forwarded-for")) ??
+				headers.get("x-real-ip")
+		);
+	}
+
+	return null;
 };
 
 const getSafeHeaders = (headers: Headers): Record<string, string> => {
@@ -170,11 +171,8 @@ const getSafeHeaders = (headers: Headers): Record<string, string> => {
 	const allowedHeaders = [
 		"accept",
 		"accept-language",
-		"referer",
 		"user-agent",
-		"x-vercel-ip-city",
 		"x-vercel-ip-country",
-		"x-vercel-ip-country-region",
 	];
 
 	for (const header of allowedHeaders) {
@@ -190,7 +188,7 @@ const getSafeHeaders = (headers: Headers): Record<string, string> => {
 
 const shouldTrackClassification = (
 	classification: BotClassification,
-	mode: VirentBotTrackerOptions["trackMode"] = "bots"
+	mode: VirentBotTrackerOptions["trackMode"] = "all"
 ) => {
 	if (mode === "all") {
 		return true;
@@ -209,7 +207,11 @@ const createPayload = async (
 	trackOptions: TrackBotRequestOptions
 ): Promise<BotVisitIngestPayload> => {
 	const requestUrl = new URL(request.url);
-	const headers = request.headers;
+	requestUrl.search = "";
+	requestUrl.hash = "";
+	requestUrl.username = "";
+	requestUrl.password = "";
+	const { headers } = request;
 	const userAgent = getHeader(headers, "user-agent");
 	const classification =
 		trackOptions.classification ??
@@ -219,24 +221,25 @@ const createPayload = async (
 			denylistRules: options.denylistRules,
 		});
 	const ipHash = await hashIpAddress(
-		getClientIpAddress(headers),
+		getClientIpAddress(headers, options.trustedProxy ?? "none"),
 		options.ipHashSalt ?? options.siteId ?? ""
 	);
 
+	const safeHeaders = getSafeHeaders(headers);
 	return {
 		accept: getHeader(headers, "accept"),
 		acceptLanguage: getHeader(headers, "accept-language"),
-		city: getHeader(headers, "x-vercel-ip-city"),
+		city: null,
 		classification,
 		country: getHeader(headers, "x-vercel-ip-country"),
-		headers: getSafeHeaders(headers),
+		headers: safeHeaders,
 		host: requestUrl.host,
 		ipHash,
 		method: request.method,
 		path: requestUrl.pathname,
-		query: getQueryObject(requestUrl),
-		referer: getHeader(headers, "referer"),
-		region: getHeader(headers, "x-vercel-ip-country-region"),
+		query: {},
+		referer: null,
+		region: null,
 		requestId:
 			trackOptions.requestId ??
 			getHeader(headers, requestIdHeader) ??
@@ -307,6 +310,14 @@ export const createVirentBotTracker = (
 			};
 		}
 
+		const requestUrl = new URL(request.url);
+		if (
+			!["GET", "HEAD"].includes(request.method) ||
+			internalPathPattern.test(requestUrl.pathname) ||
+			assetPathPattern.test(requestUrl.pathname)
+		) {
+			return { accepted: false, reason: "ineligible-request" };
+		}
 		const userAgent = getHeader(request.headers, "user-agent");
 		const classification =
 			trackOptions.classification ??
