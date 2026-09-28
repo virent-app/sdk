@@ -65,12 +65,46 @@ The broader default increases ingestion traffic and is a behavioral change from
 locally and may miss newly recognized agents. Privacy protections apply in every mode.
 Use the endpoint supplied by your Virent installation guide when testing staging.
 
+## First-Party Analytics (Next.js)
+
+Privacy tools often block analytics scripts served from a third-party host,
+which silently undercounts visits. Serve the browser script and its events from
+your own domain with a catch-all route, for example `app/vt/[...path]/route.ts`:
+
+```ts
+import { createVirentAnalyticsProxy } from "@virent.app/sdk/next";
+
+export const { GET, POST } = createVirentAnalyticsProxy({
+	trustedProxy: "vercel",
+	writeKey: process.env.VIRENT_INGEST_SECRET,
+});
+```
+
+Then load the script from that route:
+
+```tsx
+<Script
+	data-api-url="/vt/event"
+	data-write-key="vha_pk_..."
+	src="/vt/script.js"
+	strategy="afterInteractive"
+/>
+```
+
+The secret `writeKey` is the same key as bot tracking. It lets Virent trust the
+visitor IP and country the route forwards; without it, geography reflects your
+server's location. The key stays on your server and is never sent to browsers.
+Pass `origin` to use a Virent environment other than production. If a
+middleware or `proxy.ts` rewrites paths (for example locale redirects), exclude
+`/vt/` from it so `POST /vt/event` reaches the route unchanged.
+
 ## Exports
 
 - `@virent.app/sdk/browser`: browser pageview, event, identify, and goal
   tracking.
 - `@virent.app/sdk/server`: framework-independent bot request tracking.
-- `@virent.app/sdk/next`: Next.js proxy helper for bot tracking.
+- `@virent.app/sdk/next`: Next.js proxy helper for bot tracking and the
+  first-party analytics route.
 
 ## Support
 

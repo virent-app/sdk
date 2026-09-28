@@ -1,5 +1,21 @@
 # Changelog
 
+## 0.3.0 (prepared, not published)
+
+Adds `createVirentAnalyticsProxy` to `@virent.app/sdk/next`: a catch-all route
+handler that serves the browser script and relays its events from the site's
+own domain, so privacy tools that block third-party analytics hosts no longer
+drop visits. With the site's secret `writeKey`, it forwards the visitor IP and
+country, which Virent trusts only for that website. Requires the matching
+Virent ingest release (`x-virent-proxy-key` support) to be deployed first.
+
+Release order:
+
+1. Deploy Virent with first-party proxy support.
+2. Build/test and publish SDK 0.3.0 through the public SDK release process.
+3. Add the route and script change to the consumer and compare visit counts
+   against a reference (for Quantum, Vercel Web Analytics).
+
 ## 0.2.0 (prepared, not published)
 
 Behavior change: omitting `trackMode` forwards eligible GET/HEAD page requests

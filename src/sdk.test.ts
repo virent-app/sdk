@@ -9,7 +9,7 @@ import {
 	trackGoal,
 	type VirentBrowserOptions,
 } from "./browser";
-import { createVirentBotProxy } from "./next";
+import { createVirentAnalyticsProxy, createVirentBotProxy } from "./next";
 import { createVirentBotTracker } from "./server";
 
 const virentIdPattern = /^vnt_/;
@@ -647,6 +647,116 @@ test("all mode excludes assets and internal requests", async () => {
 			results.every((result) => result.reason === "ineligible-request")
 		).toBe(true);
 		expect(count).toBe(0);
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
+test("first-party proxy serves the script from the site's own domain", async () => {
+	const originalFetch = globalThis.fetch;
+	const requests: string[] = [];
+	globalThis.fetch = ((input: RequestInfo | URL) => {
+		requests.push(String(input));
+		return Promise.resolve(new Response("/* virent */", { status: 200 }));
+	}) as typeof fetch;
+
+	try {
+		const proxy = createVirentAnalyticsProxy({
+			origin: "https://stage.virent.app/",
+		});
+		const first = await proxy.GET(
+			new Request("https://quantum.ltda/vt/script.js")
+		);
+		const second = await proxy.GET(
+			new Request("https://quantum.ltda/vt/script.js")
+		);
+		const other = await proxy.GET(new Request("https://quantum.ltda/vt/other"));
+
+		expect(await first.text()).toBe("/* virent */");
+		expect(first.headers.get("content-type")).toContain("javascript");
+		expect(second.status).toBe(200);
+		expect(other.status).toBe(404);
+		// The script is cached, so Virent is fetched once.
+		expect(requests).toEqual(["https://stage.virent.app/js/script.js"]);
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
+test("first-party proxy forwards events with the visitor's network context", async () => {
+	const originalFetch = globalThis.fetch;
+	const captured: { upstream?: { headers: Headers; url: string } } = {};
+	globalThis.fetch = ((input: RequestInfo | URL, init?: RequestInit) => {
+		captured.upstream = {
+			headers: new Headers(init?.headers),
+			url: String(input),
+		};
+		return Promise.resolve(Response.json({ accepted: 1 }, { status: 200 }));
+	}) as typeof fetch;
+
+	try {
+		const proxy = createVirentAnalyticsProxy({
+			origin: "https://stage.virent.app",
+			trustedProxy: "vercel",
+			writeKey: "vha_sk_secret",
+		});
+		const response = await proxy.POST(
+			new Request("https://quantum.ltda/vt/event?key=vha_pk_public", {
+				body: JSON.stringify({ events: [] }),
+				headers: {
+					"content-type": "text/plain;charset=UTF-8",
+					"user-agent":
+						"Mozilla/5.0 (iPhone; CPU iPhone OS 18_7 like Mac OS X)",
+					"x-vercel-forwarded-for": "203.0.113.7",
+					"x-vercel-ip-country": "BR",
+				},
+				method: "POST",
+			})
+		);
+
+		expect(response.status).toBe(200);
+		expect(captured.upstream?.url).toBe(
+			"https://stage.virent.app/v1/ingest/batch?key=vha_pk_public"
+		);
+		expect(captured.upstream?.headers.get("x-virent-proxy-key")).toBe(
+			"vha_sk_secret"
+		);
+		expect(captured.upstream?.headers.get("x-virent-forwarded-for")).toBe(
+			"203.0.113.7"
+		);
+		expect(captured.upstream?.headers.get("x-virent-forwarded-country")).toBe(
+			"BR"
+		);
+		expect(captured.upstream?.headers.get("origin")).toBe(
+			"https://quantum.ltda"
+		);
+		expect(captured.upstream?.headers.get("user-agent")).toContain("iPhone");
+		// The browser's publishable key stays in the query, never in x-api-key.
+		expect(captured.upstream?.headers.get("x-api-key")).toBeNull();
+	} finally {
+		globalThis.fetch = originalFetch;
+	}
+});
+
+test("first-party proxy forwards no visitor context without a secret key", async () => {
+	const originalFetch = globalThis.fetch;
+	const captured: { headers?: Headers } = {};
+	globalThis.fetch = ((_input: RequestInfo | URL, init?: RequestInit) => {
+		captured.headers = new Headers(init?.headers);
+		return Promise.resolve(Response.json({}, { status: 200 }));
+	}) as typeof fetch;
+
+	try {
+		await createVirentAnalyticsProxy({ trustedProxy: "vercel" }).POST(
+			new Request("https://quantum.ltda/vt/event?key=vha_pk_public", {
+				body: "{}",
+				headers: { "x-vercel-forwarded-for": "203.0.113.7" },
+				method: "POST",
+			})
+		);
+
+		expect(captured.headers?.get("x-virent-proxy-key")).toBeNull();
+		expect(captured.headers?.get("x-virent-forwarded-for")).toBeNull();
 	} finally {
 		globalThis.fetch = originalFetch;
 	}
